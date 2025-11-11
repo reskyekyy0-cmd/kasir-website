@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kasir Rumah Makan - Landscape</title>
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+  <style>
+    body {
+      font-family: "Courier New", monospace;
+      margin: 0;
+      padding: 0;
+      background: #f4f4f4;
+      color: #333;
+      overflow-x: hidden;
+    }
+
+    h1 {
+      text-align: center;
+      margin: 10px 0;
+      color: #2c3e50;
+    }
+
+    /* LOGIN */
+    #login-box {
+      max-width: 350px;
+      margin: 120px auto;
+      padding: 25px;
+      background: white;
+      border-radius: 8px;
+      text-align: center;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+    #login-box input {
+      width: 90%;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    #login-box button {
+      background: #27ae60;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    /* LANDSCAPE KASIR */
+    #kasir-app {
+      display: none;
+      padding: 20px;
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .left-panel {
+      flex: 2;
+      background: white;
+      border-radius: 10px;
+      padding: 15px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+      overflow-y: auto;
+      height: 90vh;
+    }
+
+    .right-panel {
+      flex: 1.2;
+      background: white;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+      height: 90vh;
+      overflow-y: auto;
+    }
+
+    .menu-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 15px;
+    }
+
+    .menu-item {
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 10px;
+      text-align: center;
+      background: #fafafa;
+    }
+
+    .menu-item img {
+      width: 100%;
+      height: 100px;
+      object-fit: cover;
+      border-radius: 5px;
+      margin-bottom: 8px;
+    }
+
+    .menu-item .price {
+      color: #e67e22;
+    }
+
+    .search-box input {
+      width: 90%;
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #bbb;
+      margin-bottom: 15px;
+    }
+
+    .payment-methods label {
+      display: block;
+      margin: 8px 0;
+    }
+
+    .ewallets img {
+      width: 70px;
+      margin: 5px;
+    }
+
+    #receipt {
+      background: #fff;
+      padding: 15px;
+      border-radius: 8px;
+      border: 1px dashed #333;
+      font-size: 14px;
+      white-space: pre-wrap;
+      font-family: monospace;
+      margin-top: 15px;
+    }
+
+    button {
+      background: #27ae60;
+      color: white;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    button:hover {
+      background: #219150;
+    }
+
+    @media print {
+      body {
+        width: 100%;
+        transform: rotate(90deg);
+      }
+      #kasir-app, #receipt {
+        box-shadow: none;
+        border: none;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- LOGIN -->
+  <div id="login-box">
+    <h2>Login Kasir</h2>
+    <input type="text" id="kasir-nama" placeholder="Masukkan nama kasir">
+    <button onclick="login()">Masuk</button>
+    <p id="error" style="color:red;"></p>
+  </div>
+
+  <!-- KASIR LANDSCAPE -->
+  <div id="kasir-app">
+    <div class="left-panel">
+      <h1>🍜 Kasir Rumah Makan</h1>
+      <div class="search-box">
+        <input type="text" id="search" placeholder="Cari menu..." onkeyup="searchMenu()">
+      </div>
+
+      <h3>Menu Makanan</h3>
+      <div class="menu-grid" id="food-menu"></div>
+
+      <h3>Menu Minuman</h3>
+      <div class="menu-grid" id="drink-menu"></div>
+    </div>
+
+    <div class="right-panel">
+      <h2>Metode Pembayaran</h2>
+      <div class="payment-methods">
+        <label><input type="radio" name="payment" value="Cash" checked> 💵 Cash</label>
+        <label><input type="radio" name="payment" value="QRIS"> 🏧 QRIS</label>
+        <label><input type="radio" name="payment" value="Dana"> 📱 Dana</label>
+        <label><input type="radio" name="payment" value="OVO"> 🟣 OVO</label>
+        <label><input type="radio" name="payment" value="GoPay"> 🔵 GoPay</label>
+      </div>
+
+      <div class="ewallets">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/QRIS_logo.svg" alt="QRIS">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/5/5b/Dana_logo.png" alt="Dana">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/4/45/Logo_ovo_purple.svg" alt="OVO">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/9/9a/GoPay_logo.png" alt="GoPay">
+      </div>
+
+      <hr>
+      <label>Jumlah Dibayar (Rp):</label><br>
+      <input type="number" id="bayar" placeholder="Masukkan uang bayar">
+
+      <button onclick="bayar()">Bayar & Cetak</button>
+
+      <div id="receipt"></div>
+    </div>
+  </div>
+
+  <script>
+    function login() {
+      let nama = document.getElementById("kasir-nama").value.trim();
+      if (nama.toLowerCase() === "kasir yeaaaa") {
+        document.getElementById("login-box").style.display = "none";
+        document.getElementById("kasir-app").style.display = "flex";
+      } else {
+        document.getElementById("error").textContent = "❌ Nama kasir salah! Gunakan: Kasir Yeaaaa";
+      }
+    }
+
+   /* DATA MENU */
+   const foods = [
+       {name:"Nasi Goreng", price:15000, img:"https://d1vbn70lmn1nqe.cloudfront.net/prod/wp-content/uploads/2025/03/11082616/5-Resep-Nasi-Goreng-Sederhana-hingga-Spesial-Mudah-dan-Praktis.jpg"},
+      {name:"Mie Ayam", price:12000, img:"https://fibercreme.com/wp-content/uploads/2025/05/perbedaan-bakmi-dan-mie-ayam_1.webp"},
+      {name:"Soto Ayam", price:18000, img:"https://assets.tmecosys.com/image/upload/t_web_rdp_recipe_584x480_1_5x/img/recipe/ras/Assets/23f62312738135ab286e78812093c46b/Derivates/2e373c2ef0bf36c9e8475cbf93347db5a3496309.jpg"},
+      {name:"Bakso", price:15000, img:"https://i.pinimg.com/originals/2e/0a/7e/2e0a7ef7a3363fc97842301b68a2106c.jpg"},
+      {name:"Ayam Bakar", price:20000, img:"https://assets-cloudflare.segari-ops.id/recipes/ayam-bakar-kecap-lsbbzkrxiyFQN.jpg"},
+      {name:"Ayam Goreng", price:18000, img:"https://assets.promediateknologi.id/crop/100x125:964x873/0x0/webp/photo/p3/93/2024/08/24/d9ebed977f66771d84c8eb65aa4bdf9f-1-1048603829.jpg"},
+      {name:"Rendang", price:25000, img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQlGE3EVWpzvCnIhelI2hfNnpZEGAXuThsqqg&s"},
+      {name:"Gado-Gado", price:15000, img:"https://static.promediateknologi.id/crop/0x0:0x0/0x0/webp/photo/p2/74/2025/01/27/Gado-Gado-2337756915.jpg"},
+      {name:"Sate Ayam", price:20000, img:"https://d1vbn70lmn1nqe.cloudfront.net/prod/wp-content/uploads/2023/07/14053934/Mudah-Dibuat-di-Rumah-Ini-Resep-Sate-Ayam-Bumbu-Kacang-yang-Lezat-.jpg.webp"},
+      {name:"Sate Kambing", price:30000, img:"https://akcdn.detik.net.id/visual/2018/08/13/c54b0c9b-6f64-40c1-8c6d-5ab3dab75b73_43.jpeg?w=720&q=90"},
+      {name:"Nasi Uduk", price:12000, img:"https://asset.kompas.com/crops/cnjJ8a2_lEamvP1OkUClN1Oi0Dg=/100x67:900x600/1200x800/data/photo/2021/02/21/603203834f00f.jpg"},
+      {name:"Nasi Padang", price:25000, img:"https://cdn.rri.co.id/berita/1/images/1689391542821-images_(22)/1689391542821-images_(22).jpeg"},
+      {name:"Rawon", price:22000, img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSq17XRFk4SKS678FoVJ32bOoJhGEkxn58clg&s"},
+      {name:"Gudeg", price:20000, img:"https://static.promediateknologi.id/crop/0x0:0x0/0x0/webp/photo/p2/74/2024/02/05/Asal-Usul-dan-Sejarah-Gudeg-Yogyakarta-1982560028.jpg"},
+      {name:"Pempek", price:15000, img:"https://lingkar.news/wp-content/uploads/2023/03/Aneka-Resep-Pempek-Makanan-Tradisional-Khas-Palembang.jpg"},
+      {name:"Nasi Campur", price:20000, img:"https://i0.wp.com/resepkoki.id/wp-content/uploads/2020/03/Resep-Nasi-Campur-Bali.jpg?fit=1474%2C1445&ssl=1"},
+      {name:"Ketoprak", price:12000, img:"https://soyummyrecipes.com/wp-content/uploads/2020/06/Ketoprak-1-1.jpg"},
+      {name:"Lontong Sayur", price:15000, img:"https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/Lontong_sayur_without_spoon.JPG/1200px-Lontong_sayur_without_spoon.JPG"},
+      {name:"Martabak Telur", price:20000, img:"https://asset-2.tribunnews.com/tribunnews/foto/bank/images/martabak-telur-kulit-lumpia-yang-mudah-dibuat-di-rumah.jpg"},
+      {name:"Bubur Ayam", price:12000, img:"https://www.masakapahariini.com/wp-content/uploads/2023/06/shutterstock_1927030937.jpg"},
+      {name:"Nasi Kuning", price:15000, img:"https://assets.unileversolutions.com/recipes-v2/238137.jpg"},
+      {name:"Tahu Tek", price:12000, img:"https://asset.kompas.com/crops/WoK_UDMIGlgQcW-tj64WqxfWGsg=/114x0:958x563/1200x800/data/photo/2021/02/22/603330779a2d2.jpg"},
+      {name:"Ayam Penyet", price:18000, img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSAmC52w16M1ZwnCPpzbeJxdu8PNHTxROfSRw&s"},
+      {name:"Ikan Bakar", price:25000, img:"https://asset.kompas.com/crops/TDPZbS20DNsdoD1ySXMOdkpe1yc=/0x0:1000x667/1200x800/data/photo/2020/12/17/5fdb3cd0c1525.jpg"},
+      {name:"Sayur Asem", price:10000, img:"https://image.idntimes.com/post/20250117/sayur-asem-0633be2bc2768c88f0cd5a425f90804c.jpg"}
+    ];
+
+      const drinks = [
+      {name:"Es Teh Manis", price:5000, img:"https://img.lovepik.com/photo/60226/3064.jpg_wh860.jpg"},
+      {name:"Jus Alpukat", price:10000, img:"https://cdn.yummy.co.id/content-images/images/20200517/7SbwMalxlY9C7zERNuAMysfddx1VH0T0-31353839373133323738d41d8cd98f00b204e9800998ecf8427e.jpg?x-oss-process=image/resize,w_388,h_388,m_fixed,x-oss-process=image/format,webp"},
+      {name:"Kopi Hitam", price:8000, img:"https://static.promediateknologi.id/crop/0x0:0x0/0x0/webp/photo/p2/221/2024/08/15/KOPI-3-257598409.jpg"},
+      {name:"Es Jeruk", price:7000, img:"https://cdn1-production-images-kly.akamaized.net/2bUdwGUydtL50AOEMnCHNkD7FYQ=/469x625/smart/filters:quality(75):strip_icc():format(webp)/kly-media-production/medias/4777522/original/071308500_1710839241-iced-orange-cocktail-table__2_.jpg"},
+      {name:"Teh Tarik", price:9000, img:"https://asset.kompas.com/crops/hsrnlGnJjSvQmAEyoV_dmwBbUi4=/120x80:1000x667/1200x800/data/photo/2023/10/18/652fcf5eb1b28.jpg"},
+      {name:"Cappuccino", price:12000, img:"https://www.pinterpolitik.com/wp-content/uploads/2023/09/50de339f-7e20-4738-b9a4-a2ba49991add.webp"},
+      {name:"Es Coklat", price:10000, img:"https://images.pexels.com/photos/11277040/pexels-photo-11277040.jpeg?auto=compress&cs=tinysrgb&dpr=1&w=500"},
+      {name:"Jus Mangga", price:9000, img:"https://i.pinimg.com/originals/5c/c3/2f/5cc32f9786561cef38ff64db3353a516.jpg"},
+      {name:"Jus Jambu", price:8000, img:"https://png.pngtree.com/png-clipart/20240901/original/pngtree-pink-guava-juice-png-image_15904723.png"},
+      {name:"Jus Melon", price:8000, img:"https://res.cloudinary.com/dk0z4ums3/image/upload/v1698734199/attached_image/10-manfaat-jus-melon-untuk-kesehatan-tubuh.jpg"},
+      {name:"Jus Apel", price:9000, img:"https://static.promediateknologi.id/crop/0x0:0x0/750x500/webp/photo/p2/250/2025/03/25/jus-apel-1-1918584269.jpg"},
+      {name:"Jus Pisang", price:8000, img:"https://enesis.com/wp-content/uploads/manfaat-jus-pisang-992x661.webp"},
+      {name:"Es Kopi Susu", price:12000, img:"https://asset.kompas.com/crops/C8Mo8F0gQE6PyXXec9oLxarbh1s=/34x24:475x318/1200x800/data/photo/2021/08/05/610b6ce6b3440.jpg"},
+      {name:"Milkshake Coklat", price:15000, img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRISFFE6O5cwwkcTai3yLW58M00Rncav0eDEg&s"},
+      {name:"Milkshake Stroberi", price:15000, img:"https://www.butteredsideupblog.com/wp-content/uploads/2023/06/How-to-Make-a-Strawberry-Milkshake-Without-Ice-Cream-17-scaled.jpg"},
+      {name:"Susu Jahe", price:10000, img:"https://api.omela.com/storage/content-editor-images/kLnxvsDxt2BHnCdJXbYr5PfyahVhq8Xn51b6XC3R.jpg"},
+      {name:"Wedang Ronde", price:12000, img:"https://assets-cloudflare.segari-ops.id/recipes/wedang-ronde-lsbcb33iUO9DQ.jpg"},
+      {name:"Bandrek", price:10000, img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQklatJwpqHCKr6HKlZkhHSugj8DTP5f3_OVg&s"},
+      {name:"Bajigur", price:10000, img:"https://lifestyle.haluan.co/wp-content/uploads/2024/11/bajigur.jpg"},
+      {name:"Es Campur", price:15000, img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSPW_OdhpuR4ZJ5Qc3io-cpre0G7aQ9zSbf5w&s"},
+      {name:"Es Buah", price:12000, img:"https://radarmukomuko.bacakoran.co/upload/50cabe3212d7608e3ef4867336b45833.jpg"},
+      {name:"Air Mineral", price:4000, img:"https://img.id.my-best.com/product_images/986019f09b637b65f5b9d8cab6f0992b.jpeg?ixlib=rails-4.3.1&q=70&lossless=0&w=800&h=800&fit=clip&s=3b2e37f84a858f7d8368592742936cef"},
+      {name:"Es Kelapa", price:10000, img:"https://www.tokomesin.com/wp-content/uploads/2015/03/es-kelapa-muda-tokomesin.jpg"},
+      {name:"Es Teler", price:15000, img:"https://www.frisianflag.com/storage/app/media/uploaded-files/es-teler-gula-merah.jpg"},
+      {name:"Jus Nanas", price:9000, img:"https://res.cloudinary.com/dk0z4ums3/image/upload/v1677418869/attached_image/17-manfaat-jus-nanas-bagi-kesehatan.jpg"}
+    ];
+
+
+    function renderMenu(list, containerId) {
+      const container = document.getElementById(containerId);
+      list.forEach(item => {
+        const div = document.createElement("div");
+        div.className = "menu-item";
+        div.dataset.name = item.name.toLowerCase();
+        div.dataset.price = item.price;
+        div.innerHTML = `
+          <img src="${item.img}">
+          <div>${item.name}</div>
+          <div class="price">Rp ${item.price.toLocaleString()}</div>
+          <input type="number" min="0" value="0">
+        `;
+        container.appendChild(div);
+      });
+    }
+    renderMenu(foods,"food-menu");
+    renderMenu(drinks,"drink-menu");
+
+    function searchMenu() {
+      let q = document.getElementById("search").value.toLowerCase();
+      document.querySelectorAll(".menu-item").forEach(i => {
+        i.style.display = i.dataset.name.includes(q) ? "block" : "none";
+      });
+    }
+
+    function bayar() {
+      let items = document.querySelectorAll(".menu-item");
+      let bayarInput = parseInt(document.getElementById("bayar").value || "0");
+      let payment = document.querySelector('input[name="payment"]:checked').value;
+      let namaKasir = "Kasir Yeaaaa";
+      let total = 0, struk = "";
+
+      items.forEach(item => {
+        let qty = parseInt(item.querySelector("input").value);
+        if (qty > 0) {
+          let name = item.querySelector("div").textContent;
+          let price = parseInt(item.dataset.price);
+          let subtotal = qty * price;
+          total += subtotal;
+          struk += `${name.padEnd(18,'.')} x${qty} = Rp ${subtotal.toLocaleString()}\n`;
+        }
+      });
+
+      if (total === 0) {
+        alert("❌ Tidak ada pesanan!");
+        return;
+      }
+
+      let pajak = total * 0.1;
+      let grand = total + pajak;
+      let kembali = bayarInput - grand;
+      let waktu = new Date().toLocaleString("id-ID");
+
+      let isi = `\n      🍜 RUMAH MAKAN ADIT 🍜
+Jl. Contoh No.123, Amsterdam
+Telp: 0899-0784-351
+--------------------------------
+Kasir : ${namaKasir}
+Waktu : ${waktu}
+--------------------------------
+${struk}
+--------------------------------
+Subtotal : Rp ${total.toLocaleString()}
+Pajak (10%) : Rp ${pajak.toLocaleString()}
+Total Bayar : Rp ${grand.toLocaleString()}
+Dibayar : Rp ${bayarInput.toLocaleString()}
+Kembalian : Rp ${kembali.toLocaleString()}
+Metode : ${payment}
+--------------------------------
+Terima kasih 🙏
+Selamat Menikmati 🍽️
+`;
+
+      document.getElementById("receipt").innerText = isi;
+      JsBarcode("#barcode", grand.toString(), {format:"CODE128",width:2,height:50,displayValue:false});
+      window.print();
+    }
+  </script>
+
+</body>
+</html>
